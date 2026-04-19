@@ -8,8 +8,7 @@ topology:
       env:
         USERNAME: root
         PASSWORD: rocks
-        NICS: 8
-        PACKAGES: "htop tcpdump"
+        PACKAGES: ""
     linux:
       image: ghcr.io/srl-labs/network-multitool
 

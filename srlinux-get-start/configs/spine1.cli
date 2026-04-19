@@ -1,0 +1,54 @@
+# ==============================================
+# spine1 - AS 65100 | Loopback 10.10.10.1/32
+# EVPN Route-Reflector (overlay AS 100)
+# ==============================================
+
+# --- Routing Policy ---
+set / routing-policy policy accept-all default-action policy-result accept
+
+# --- Interfaces ---
+set / interface ethernet-1/1 admin-state enable
+set / interface ethernet-1/1 subinterface 0 ipv4 admin-state enable
+set / interface ethernet-1/1 subinterface 0 ipv4 address 10.0.0.0/31
+set / interface ethernet-1/1 subinterface 0 ip-mtu 1560
+
+set / interface ethernet-1/2 admin-state enable
+set / interface ethernet-1/2 subinterface 0 ipv4 admin-state enable
+set / interface ethernet-1/2 subinterface 0 ipv4 address 10.0.0.2/31
+set / interface ethernet-1/2 subinterface 0 ip-mtu 1560
+
+set / interface system0 admin-state enable
+set / interface system0 subinterface 0 ipv4 admin-state enable
+set / interface system0 subinterface 0 ipv4 address 10.10.10.1/32
+
+# --- Default Network Instance ---
+set / network-instance default type default
+set / network-instance default admin-state enable
+set / network-instance default interface ethernet-1/1.0
+set / network-instance default interface ethernet-1/2.0
+set / network-instance default interface system0.0
+
+set / network-instance default protocols bgp autonomous-system 65100
+set / network-instance default protocols bgp router-id 10.10.10.1
+set / network-instance default protocols bgp afi-safi ipv4-unicast admin-state enable
+set / network-instance default protocols bgp afi-safi evpn admin-state enable
+
+# eBGP underlay to leaves
+set / network-instance default protocols bgp group underlay afi-safi ipv4-unicast admin-state enable
+set / network-instance default protocols bgp group underlay export-policy [ accept-all ]
+set / network-instance default protocols bgp group underlay import-policy [ accept-all ]
+set / network-instance default protocols bgp neighbor 10.0.0.1 peer-group underlay
+set / network-instance default protocols bgp neighbor 10.0.0.1 peer-as 65001
+set / network-instance default protocols bgp neighbor 10.0.0.3 peer-group underlay
+set / network-instance default protocols bgp neighbor 10.0.0.3 peer-as 65002
+
+# iBGP EVPN overlay - route-reflector for leaves
+set / network-instance default protocols bgp group overlay local-as as-number 100
+set / network-instance default protocols bgp group overlay afi-safi evpn admin-state enable
+set / network-instance default protocols bgp group overlay route-reflector client true
+set / network-instance default protocols bgp group overlay route-reflector cluster-id 10.10.10.1
+set / network-instance default protocols bgp group overlay transport local-address 10.10.10.1
+set / network-instance default protocols bgp neighbor 10.10.10.2 peer-group overlay
+set / network-instance default protocols bgp neighbor 10.10.10.2 peer-as 100
+set / network-instance default protocols bgp neighbor 10.10.10.3 peer-group overlay
+set / network-instance default protocols bgp neighbor 10.10.10.3 peer-as 100
